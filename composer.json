@@ -1,0 +1,19 @@
+{
+    "name": "jfusion/platform-joomla",
+    "type": "jfusion-platform-joomla",
+    "description": "JFusion Platform code for joomla",
+    "keywords": ["jfusion", "platform", "joomla"],
+    "homepage": "https://github.com/jfusion/org.jfusion.platform.joomla",
+    "license": "GPL-2.0+",
+    "require": {
+        "php": ">=5.3.10"
+    },
+    "require-dev": {
+        "jfusion/framework": "~1"
+    },
+    "autoload": {
+        "psr-4": {
+            "JFusion\\": "src/"
+        }
+    }
+}
