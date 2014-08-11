@@ -1,5 +1,9 @@
 <?php namespace JFusion\Api;
 
+use JFactory;
+use JFusionFunction;
+use JLoader;
+
 /**
  * Intended for direct integration with joomla (loading the joomla framework directly in to other software.)
  */
@@ -52,17 +56,17 @@ class Platform_Joomla extends Platform {
 			jimport('joomla.user.user');
 			jimport('joomla.html.parameter');
 			// JText cannot be loaded with jimport since it's not in a file called text.php but in methods
-			\JLoader::register('JText', JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'joomla' . DIRECTORY_SEPARATOR . 'methods.php');
-			\JLoader::register('JRoute', JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'joomla' . DIRECTORY_SEPARATOR . 'methods.php');
+			JLoader::register('JText', JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'joomla' . DIRECTORY_SEPARATOR . 'methods.php');
+			JLoader::register('JRoute', JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'joomla' . DIRECTORY_SEPARATOR . 'methods.php');
 
 			//load JFusion's libraries
 			require_once JPATH_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_jfusion' . DIRECTORY_SEPARATOR . 'import.php';
 		} elseif (!defined('IN_JOOMLA')) {
 			define('IN_JOOMLA', 1);
-			\JFusionFunction::reconnectJoomlaDb();
+			JFusionFunction::reconnectJoomlaDb();
 		}
 
-		$mainframe = \JFactory::getApplication('site');
+		$mainframe = JFactory::getApplication('site');
 		$GLOBALS['mainframe'] = $mainframe;
 		return $mainframe;
 	}

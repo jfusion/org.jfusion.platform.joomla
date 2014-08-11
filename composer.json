@@ -6,7 +6,8 @@
     "homepage": "https://github.com/jfusion/org.jfusion.platform.joomla",
     "license": "GPL-2.0+",
     "require": {
-        "php": ">=5.3.10"
+        "php": ">=5.3.10",
+        "jfusion/css": "~1"
     },
     "require-dev": {
         "jfusion/framework": "~1"
