@@ -15,8 +15,7 @@
 
 use JFusion\Factory;
 use JFusion\Framework;
-use JFusion\Parser\Css;
-use JFusion\Plugin\Plugin_Platform;
+use JFusion\Plugin\Platform;
 use JFusion\User\Userinfo;
 
 use Joomla\Filesystem\File;
@@ -47,7 +46,7 @@ use \stdClass;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link      http://www.jfusion.org
  */
-class Joomla extends Plugin_Platform
+class Joomla extends Platform
 {
 	var $helper;
 

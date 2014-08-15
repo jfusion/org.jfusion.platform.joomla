@@ -1,4 +1,6 @@
-<?php namespace JFusion\Api;
+<?php namespace JFusion\Api\Platform;
+
+use JFusion\Api\Platform;
 
 use JFactory;
 use JFusionFunction;
@@ -7,7 +9,7 @@ use JLoader;
 /**
  * Intended for direct integration with joomla (loading the joomla framework directly in to other software.)
  */
-class Platform_Joomla extends Platform {
+class Joomla extends Platform {
 	/**
 	 * @return \JApplication|\JApplicationCms
 	 */
