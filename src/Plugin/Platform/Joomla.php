@@ -197,6 +197,7 @@ class Joomla extends Platform
      * Returns the URL to the reply page for a thread
      * @param integer $forumid
      * @param integer $threadid
+     *
      * @return string URL
      */
     function getReplyURL($forumid, $threadid)
@@ -571,6 +572,7 @@ class Joomla extends Platform
 	 * @param string $sort
 	 *
 	 * @internal param object $params object with discussion bot parameters
+	 *
 	 * @return array or object Returns retrieved posts
 	 */
     function getPosts($dbparams, $existingthread, $start, $limit, $sort)
@@ -823,6 +825,7 @@ JS;
 	 * @param stdClass  $postinfo    object with post info
 	 *
 	 * @throws \RuntimeException
+	 *
 	 * @return stdClass
 	 */
 	function createPost($params, $ids, $contentitem, Userinfo $userinfo, $postinfo)
@@ -861,6 +864,7 @@ JS;
 	 *
 	 * @param boolean $keepalive    Tells the function to regenerate the inactive session as long as the other is active
 	 * unless there is a persistent cookie available for inactive session
+	 *
 	 * @return integer 0 if no session changes were made, 1 if session created
 	 */
 	function syncSessions($keepalive = false)
@@ -935,6 +939,7 @@ JS;
 	 * @param Userinfo $userinfo - it can be null if the user is not logged for example.
 	 *
 	 * @throws \RuntimeException
+	 *
 	 * @return array nothing
 	 */
 	function setLanguageFrontEnd(Userinfo $userinfo = null)
@@ -1035,6 +1040,7 @@ JS;
 	 * Generates SQL query for the search plugin that does not include where, limit, or order by
 	 *
 	 * @param JRegistry &$pluginParam custom plugin parameters in search.xml
+	 *
 	 * @return string Returns query string
 	 */
 	function getSearchQuery(&$pluginParam)
@@ -1496,6 +1502,7 @@ JS;
 
 	/**
 	 * @param $matches
+	 *
 	 * @return string
 	 */
 	function fixAction($matches) {
@@ -1807,6 +1814,7 @@ JS;
 
 	/**
 	 * @param string $type
+	 *
 	 * @return mixed|string
 	 */
 	private function curlFramelessBuildUrl($type = 'GET') {
