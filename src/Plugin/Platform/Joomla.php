@@ -13,6 +13,9 @@
  * @link      http://www.jfusion.org
  */
 
+use Captcha\Captcha;
+
+use JFusion\Css\Css;
 use JFusion\Factory;
 use JFusion\Framework;
 use JFusion\Plugin\Platform;
@@ -24,10 +27,11 @@ use Joomla\Filesystem\Path;
 use Joomla\Language\Text;
 use Joomla\Uri\Uri;
 
+use Joomla\Registry\Registry;
+
 use Psr\Log\LogLevel;
 
 use JFusionFunction;
-use JRegistry;
 use JCategories;
 use JCategoryNode;
 use JEventDispatcher;
@@ -208,7 +212,7 @@ class Joomla extends Platform
 	/**
 	 * Checks to see if a thread already exists for the content item and calls the appropriate function
 	 *
-	 * @param JRegistry  &$dbparams    object with discussion bot parameters
+	 * @param Registry  &$dbparams    object with discussion bot parameters
 	 * @param object     &$contentitem object containing content information
 	 * @param object|int &$threadinfo  object with threadinfo from lookup table
 	 *
@@ -281,7 +285,7 @@ class Joomla extends Platform
     /**
      * Retrieves the default forum based on section/category stipulations or default set in the plugins config
      *
-     * @param JRegistry &$dbparams    discussion bot parameters
+     * @param Registry &$dbparams    discussion bot parameters
      * @param object &$contentitem object containing content information
      *
      * @return int Returns id number of the forum
@@ -394,7 +398,7 @@ class Joomla extends Platform
      * Function that determines the author of an article or returns the default user if one is not found
      * For the discussion bot
      *
-     * @param JRegistry &$dbparams    object with discussion bot parameters
+     * @param Registry &$dbparams    object with discussion bot parameters
      * @param object &$contentitem contentitem
      *
      * @return int forum's userid
@@ -471,7 +475,7 @@ class Joomla extends Platform
 	/**
 	 * Prepares the body for the first post in a thread
 	 *
-	 * @param JRegistry &$dbparams 		object with discussion bot parameters
+	 * @param Registry &$dbparams 		object with discussion bot parameters
 	 * @param object	$contentitem 	object containing content information
 	 *
 	 * @return string
@@ -509,7 +513,7 @@ class Joomla extends Platform
 		}
 
 		//prepare the content
-		$this->prepareText($text, 'forum', new JRegistry());
+		$this->prepareText($text, 'forum', new Registry());
 
 		return $text;
 	}
@@ -524,7 +528,7 @@ class Joomla extends Platform
 	 *                                  forum (to be published in a thread or post; used by discussion bot)
 	 *                                  activity (displayed in activity module; used by the activity module)
 	 *                                  search (displayed as search results; used by search plugin)
-	 * @param JRegistry $params          (optional) Joomla parameter object passed in by JFusion's module/plugin
+	 * @param Registry $params          (optional) Joomla parameter object passed in by JFusion's module/plugin
 	 *
 	 * @return array  $status           Information passed back to calling script such as limit_applied
 	 */
@@ -565,7 +569,7 @@ class Joomla extends Platform
 	/**
 	 * Retrieves the posts to be displayed in the content item if enabled
 	 *
-	 * @param JRegistry $dbparams
+	 * @param Registry $dbparams
 	 * @param object $existingthread object with forumid, threadid, and postid (first post in thread)
 	 * @param int $start
 	 * @param int $limit
@@ -619,7 +623,7 @@ JS;
     /**
      * Returns HTML of a quick reply
      *
-     * @param JRegistry &$dbparams       object with discussion bot parameters
+     * @param Registry &$dbparams       object with discussion bot parameters
      * @param boolean $showGuestInputs toggles whether to show guest inputs or not
      *
      * @return string of html
@@ -654,7 +658,7 @@ HTML;
     /**
      * Creates the html for the selected captcha for the discussion bot
      *
-     * @param JRegistry $dbparams object with discussion bot parameters
+     * @param Registry $dbparams object with discussion bot parameters
      *
      * @return string
      */
@@ -682,35 +686,20 @@ HTML;
 					ob_end_clean();
 				break;
 			case 'recaptcha':
-				//using reCAPTCHA (http://recaptcha.net)
-				$recaptchalib = JPATH_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_jfusion' . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . 'recaptchalib.php';
-				if(file_exists($recaptchalib)) {
-					$theme = $dbparams->get('recaptcha_theme', 'red');
-					$lang = $dbparams->get('recaptcha_lang', 'en');
+				$html .= '<tr><td colspan="2">';
+				try {
+					$captcha = new Captcha();
 
-					$document = JFactory::getDocument();
+					$captcha->setPublicKey($dbparams->get('recaptcha_publickey'));
+					$captcha->setPrivateKey($dbparams->get('recaptcha_privatekey'));
 
-                    $js = <<<JS
-					var RecaptchaOptions = {
-   					    theme : '{$theme}',
-   					    lang: '{$lang}'
-					};
-JS;
+					$captcha->setTheme($dbparams->get('recaptcha_theme', 'red'));
 
-					$document->addScriptDeclaration($js);
-
-					$html .= '<tr><td colspan="2">';
-					if (!function_exists('recaptcha_get_html')) {
-	                	include_once $recaptchalib;
-	                }
-					$error = null;
-					$publickey = $dbparams->get('recaptcha_publickey');
-					$html .= recaptcha_get_html($publickey, $error);
-					if(!empty($error)) {
-						$html .= $error;
-					}
-					$html .= '</td></tr>';
+					$html .= $captcha->html();
+				} catch (Exception $e) {
+					$html .= $e->getMessage();
 				}
+				$html .= '</td></tr>';
 				break;
 			case 'custom':
 				$html .= $this->createCustomCaptcha($dbparams);
@@ -738,7 +727,7 @@ JS;
     /**
      * Verifies captcha of a guest post submitted by the discussion bot
      *
-     * @param JRegistry &$dbparams object with discussion bot parameters
+     * @param Registry &$dbparams object with discussion bot parameters
      *
      * @return boolean
      */
@@ -772,23 +761,22 @@ JS;
 				break;
 			case 'recaptcha':
 				//using reCAPTCHA (http://recaptcha.net)
-				$recaptchalib = JPATH_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_jfusion' . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . 'recaptchalib.php';
-				if(file_exists($recaptchalib)) {
-					if (!function_exists('recaptcha_check_answer')) {
-                		include_once $recaptchalib;
-            		}
+				try {
+					$captcha = new Captcha();
 
-					$privatekey = $dbparams->get('recaptcha_privatekey');
+					$captcha->setPublicKey($dbparams->get('recaptcha_publickey'));
+					$captcha->setPrivateKey($dbparams->get('recaptcha_privatekey'));
+
 					$response_field  = Factory::getApplication()->input->post->getString('recaptcha_response_field', '');
 					$challenge_field = Factory::getApplication()->input->post->getString('recaptcha_challenge_field', '');
 
-					$resp = recaptcha_check_answer ($privatekey,
-						$_SERVER['REMOTE_ADDR'],
-						$challenge_field,
-						$response_field);
-					if ($resp->is_valid) {
-		                $captcha_verification = true;
+					$responce = $captcha->check($challenge_field, $response_field);
+
+					if ($responce->isValid()) {
+						$captcha_verification = true;
 					}
+				} catch (Exception $e) {
+					Framework::raise(LogLevel::ERROR, $e, $this->getJname());
 				}
 				break;
 			case 'disabled':
@@ -818,7 +806,7 @@ JS;
 	/**
 	 * Creates a post from the quick reply
 	 *
-	 * @param JRegistry $params      object with discussion bot parameters
+	 * @param Registry $params      object with discussion bot parameters
 	 * @param stdClass  $ids         stdClass with forum id ($ids->forumid, thread id ($ids->threadid) and first post id ($ids->postid)
 	 * @param object    $contentitem object of content item
 	 * @param Userinfo  $userinfo    object info of the forum user
@@ -850,7 +838,7 @@ JS;
     /**
      * @param array $config
      * @param $view
-     * @param JRegistry $params
+     * @param Registry $params
      *
      * @return string
      */
@@ -875,7 +863,7 @@ JS;
 	/**
 	 * @param array $config
 	 * @param $view
-	 * @param JRegistry $params
+	 * @param Registry $params
 	 *
 	 * @return string
 	 */
@@ -924,7 +912,7 @@ JS;
 	/**
 	 * @param array $config
 	 * @param $view
-	 * @param JRegistry $params
+	 * @param Registry $params
 	 *
 	 * @return string
 	 */
@@ -963,7 +951,7 @@ JS;
 	 *
 	 * @param string &$text        string text to be searched
 	 * @param string &$phrase      string how the search should be performed exact, all, or any
-	 * @param JRegistry &$pluginParam custom plugin parameters in search.xml
+	 * @param Registry &$pluginParam custom plugin parameters in search.xml
 	 * @param int    $itemid       what menu item to use when creating the URL
 	 * @param string $ordering     ordering sent by Joomla: null, oldest, popular, category, alpha, or newest
 	 *
@@ -1039,7 +1027,7 @@ JS;
 	/**
 	 * Generates SQL query for the search plugin that does not include where, limit, or order by
 	 *
-	 * @param JRegistry &$pluginParam custom plugin parameters in search.xml
+	 * @param Registry &$pluginParam custom plugin parameters in search.xml
 	 *
 	 * @return string Returns query string
 	 */
@@ -1052,7 +1040,7 @@ JS;
 	 * Add on a plugin specific clause;
 	 *
 	 * @param string &$where reference to where clause already generated by search bot; add on plugin specific criteria
-	 * @param JRegistry &$pluginParam custom plugin parameters in search.xml
+	 * @param Registry &$pluginParam custom plugin parameters in search.xml
 	 * @param string $ordering     ordering sent by Joomla: null, oldest, popular, category, alpha, or newest
 	 */
 	function getSearchCriteria(&$where, &$pluginParam, $ordering)
@@ -1063,7 +1051,7 @@ JS;
 	 * Filter out results from the search ie forums that a user does not have permission to
 	 *
 	 * @param array &$results object list of search query results
-	 * @param JRegistry &$pluginParam custom plugin parameters in search.xml
+	 * @param Registry &$pluginParam custom plugin parameters in search.xml
 	 */
 	function filterSearchResults(&$results, &$pluginParam)
 	{
