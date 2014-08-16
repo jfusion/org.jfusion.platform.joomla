@@ -25,26 +25,26 @@ class Joomla extends Platform {
 			// trick joomla into thinking we're running through joomla
 			define('_JEXEC', true);
 			define('DS', DIRECTORY_SEPARATOR);
-			define('JPATH_BASE', dirname(__FILE__) . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . '..');
-			define('JPATH_PLATFORM', JPATH_BASE . DIRECTORY_SEPARATOR . 'libraries');
+			define('JPATH_BASE', dirname(__FILE__) . '/../..');
+			define('JPATH_PLATFORM', JPATH_BASE . '/libraries');
 
 			// load joomla libraries
-			require_once JPATH_BASE . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'defines.php';
+			require_once JPATH_BASE . '/includes/defines.php';
 			define('_JREQUEST_NO_CLEAN', true); // we don't want to clean variables as it can "corrupt" them for some applications, it also clear any globals used...
 
 			if (!class_exists('JVersion')) {
-				include_once(JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'cms' . DIRECTORY_SEPARATOR . 'version' . DIRECTORY_SEPARATOR . 'version.php');
+				include_once(JPATH_LIBRARIES . '/cms/version/version.php');
 			}
 
-			include_once JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'import.php';
-			require_once JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'loader.php';
+			include_once JPATH_LIBRARIES . '/import.php';
+			require_once JPATH_LIBRARIES . '/loader.php';
 
 			$autoloaders = spl_autoload_functions();
 			if ($autoloaders && in_array('__autoload', $autoloaders)) {
 				spl_autoload_register('__autoload');
 			}
 
-			require_once JPATH_ROOT . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'framework.php';
+			require_once JPATH_ROOT . '/includes/framework.php';
 			jimport('joomla.base.object');
 			jimport('joomla.factory');
 			jimport('joomla.filter.filterinput');
@@ -58,11 +58,11 @@ class Joomla extends Platform {
 			jimport('joomla.user.user');
 			jimport('joomla.html.parameter');
 			// JText cannot be loaded with jimport since it's not in a file called text.php but in methods
-			JLoader::register('JText', JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'joomla' . DIRECTORY_SEPARATOR . 'methods.php');
-			JLoader::register('JRoute', JPATH_LIBRARIES . DIRECTORY_SEPARATOR . 'joomla' . DIRECTORY_SEPARATOR . 'methods.php');
+			JLoader::register('JText', JPATH_LIBRARIES . '/joomla/methods.php');
+			JLoader::register('JRoute', JPATH_LIBRARIES . '/joomla/methods.php');
 
 			//load JFusion's libraries
-			require_once JPATH_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'components' . DIRECTORY_SEPARATOR . 'com_jfusion' . DIRECTORY_SEPARATOR . 'import.php';
+			require_once JPATH_ADMINISTRATOR . '/components/com_jfusion/import.php';
 		} elseif (!defined('IN_JOOMLA')) {
 			define('IN_JOOMLA', 1);
 			JFusionFunction::reconnectJoomlaDb();

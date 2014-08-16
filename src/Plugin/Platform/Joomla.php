@@ -1381,7 +1381,7 @@ JS;
 			$jname = Factory::getApplication()->input->get('Itemid');
 		}
 
-		$sourcepath = $data->css->sourcepath . $jname . DIRECTORY_SEPARATOR;
+		$sourcepath = $data->css->sourcepath . $jname . '/';
 		$urlpath = $data->css->url . $jname . '/';
 
 		Folder::create($sourcepath . 'infile');
@@ -1422,7 +1422,7 @@ JS;
 			if (preg_match_all('#<style.*?type=[\'|"]text/css[\'|"].*?>(.*?)</style>#Sims', $html, $css)) {
 				foreach ($css[1] as $key => $values) {
 					$filename = md5($values) . '.css';
-					$filenamesource = $sourcepath . 'infile' . DIRECTORY_SEPARATOR . $filename;
+					$filenamesource = $sourcepath . 'infile/' . $filename;
 
 					if (preg_match('#media=[\'|"](.*?)[\'|"]#Si', $css[0][$key], $cssMedia)) {
 						$cssMedia = $cssMedia[1];
@@ -1659,7 +1659,7 @@ JS;
 							$name = $file['name'][$key];
 							$path = $file['tmp_name'][$key];
 							if ($name) {
-								$filepath[$key] = JPATH_ROOT . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR . $name;
+								$filepath[$key] = JPATH_ROOT . '/tmp/' . $name;
 								rename($path, $filepath[$key]);
 								$post[$userfile . '[' . $key . ']'] = '@' . $filepath[$key];
 							}
@@ -1668,7 +1668,7 @@ JS;
 						$path = $file['tmp_name'];
 						$name = $file['name'];
 						$key = $path;
-						$filepath[$key] = JPATH_ROOT . DIRECTORY_SEPARATOR . 'tmp' . DIRECTORY_SEPARATOR . $name;
+						$filepath[$key] = JPATH_ROOT . '/tmp/' . $name;
 						rename($path, $filepath[$key]);
 						$post[$userfile] = '@' . $filepath[$key];
 					}
