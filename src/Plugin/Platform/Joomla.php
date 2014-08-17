@@ -52,6 +52,10 @@ use \stdClass;
  */
 class Joomla extends Platform
 {
+	const LAT = 0;
+	const LCT = 1;
+	const LCP = 2;
+
 	var $helper;
 
 	private $cookies = array();
