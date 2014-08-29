@@ -159,11 +159,10 @@ class Joomla extends Platform
      *
      * @param array  $usedforums    array with used forums
      * @param string $result_order  ordering of results
-     * @param int    $result_limit  number of results to limit by
      *
      * @return array
      */
-    function getActivityQuery($usedforums, $result_order, $result_limit)
+    function getActivityQuery($usedforums, $result_order)
     {
         return array();
     }
