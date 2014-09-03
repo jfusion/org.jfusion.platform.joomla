@@ -19,6 +19,7 @@ use JFusion\Application\Application;
 use JFusion\Css\Css;
 use JFusion\Factory;
 use JFusion\Framework;
+use JFusion\Parser\Parser;
 use JFusion\Plugin\Platform;
 use JFusion\User\Userinfo;
 
@@ -553,9 +554,11 @@ class Joomla extends Platform
 				$status['limit_applied'] = 1;
 				$options['character_limit'] = $params->get('character_limit');
 			}
-			$text = Framework::parseCode($text, 'html', $options);
+			$parser = new Parser();
+			$text = $parser->parseCode($text, 'html', $options);
 		} elseif ($for == 'search') {
-			$text = Framework::parseCode($text, 'plaintext');
+			$parser = new Parser();
+			$text = $parser->parseCode($text, 'plaintext');
 		} elseif ($for == 'activity') {
 			if ($params->get('parse_text') == 'plaintext') {
 				$options = array();
@@ -564,7 +567,8 @@ class Joomla extends Platform
 					$status['limit_applied'] = 1;
 					$options['character_limit'] = $params->get('character_limit');
 				}
-				$text = Framework::parseCode($text, 'plaintext', $options);
+				$parser = new Parser();
+				$text = $parser->parseCode($text, 'plaintext', $options);
 			}
 		}
 		return $status;
@@ -1116,7 +1120,7 @@ HTML;
 			if (isset($data->location)) {
 				$location = str_replace($data->integratedURL, '', $data->location);
 				$location = $this->fixUrl(array(1 => $location));
-				Application::getInstance()->redirect($location);
+				JFactory::getApplication()->redirect($location);
 			}
 		} catch (\Exception $e) {
 			Framework::raise(LogLevel::WARNING, $e, $this->getJname());
@@ -1874,7 +1878,7 @@ JS;
 	}
 
 	/**
-	 * Parses custom BBCode defined in $this->prepareText() and called by the nbbc parser via Framework::parseCode()
+	 * Parses custom BBCode defined in $this->prepareText()
 	 *
 	 * @param mixed $bbcode
 	 * @param int $action
