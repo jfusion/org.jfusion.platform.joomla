@@ -15,7 +15,6 @@
 
 use Captcha\Captcha;
 
-use JFusion\Application\Application;
 use JFusion\Css\Css;
 use JFusion\Factory;
 use JFusion\Framework;
