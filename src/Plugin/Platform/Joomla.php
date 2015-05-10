@@ -59,6 +59,11 @@ class Joomla extends Platform
 
 	var $helper;
 
+	/**
+	 * @var $data stdClass
+	 */
+	public $data = null;
+
 	private $cookies = array();
 	private $protected = array('format');
 	private $curlLocation = null;
@@ -71,6 +76,8 @@ class Joomla extends Platform
 		parent::__construct($instance);
 		//get the helper object
 		$this->helper = & Factory::getHelper($this->getJname(), $this->getName());
+		//get the helper object
+		$this->data = new stdClass();
 	}
 
     /**
@@ -1106,18 +1113,15 @@ HTML;
 	/**
 	 * gets the visual html output from the plugin
 	 *
-	 * @param object &$data object containing all frameless data
-	 *
 	 * @return void
 	 */
-	function getBuffer(&$data)
+	function getBuffer()
 	{
-		trigger_error('&$data deprecreated use $this->data instead', E_USER_DEPRECATED);
 		try {
-			$this->curlFrameless($data);
+			$this->curlFrameless();
 
-			if (isset($data->location)) {
-				$location = str_replace($data->integratedURL, '', $data->location);
+			if (isset($this->data->location)) {
+				$location = str_replace($this->data->integratedURL, '', $this->data->location);
 				$location = $this->fixUrl(array(1 => $location));
 				JFactory::getApplication()->redirect($location);
 			}
@@ -1128,26 +1132,25 @@ HTML;
 
 	/**
 	 * function that parses the HTML body and fixes up URLs and form actions
-	 * @param &$data
 	 */
-	function parseBody(&$data)
+	function parseBody()
 	{
 		$regex_body = array();
 		$replace_body = array();
 		$callback_body = array();
 
-		$siteuri = new Uri($data->integratedURL);
+		$siteuri = new Uri($this->data->integratedURL);
 		$path = $siteuri->getPath();
 
 		//parse anchors
-		if(!empty($data->parse_anchors)) {
+		if(!empty($this->data->parse_anchors)) {
 			$regex_body[]	= '#href=(?<quote>["\'])\#(.*?)(\k<quote>)#mS';
-			$replace_body[]	= 'href=$1' . $data->fullURL . '#$2$3';
+			$replace_body[]	= 'href=$1' . $this->data->fullURL . '#$2$3';
 			$callback_body[] = '';
 		}
 
 		//parse relative URLS
-		if(!empty($data->parse_rel_url)) {
+		if(!empty($this->data->parse_rel_url)) {
 			$regex_body[]	= '#(?<=href=["\'])\./(.*?)(?=["\'])#mS';
 			$replace_body[] = '';
 			$callback_body[] = 'fixUrl';
@@ -1157,7 +1160,7 @@ HTML;
 			$callback_body[] = 'fixUrl';
 		}
 
-		if(!empty($data->parse_abs_path)) {
+		if(!empty($this->data->parse_abs_path)) {
 			$regex_body[]	= '#(?<=action=["\']|href=["\'])' . $path . '(.*?)(?=["\'])#mS';
 			$replace_body[]	= '';
 			$callback_body[] = 'fixUrl';
@@ -1167,43 +1170,43 @@ HTML;
 			$callback_body[] = 'fixUrl';
 
 			$regex_body[] = '#(src=["\']|background=["\']|url\()' . $path . '(.*?)(["\']|\))#mS';
-			$replace_body[]	= '$1' . $data->integratedURL . '$2$3';
+			$replace_body[]	= '$1' . $this->data->integratedURL . '$2$3';
 			$callback_body[] = '';
 		}
 
 		//parse absolute URLS
-		if(!empty($data->parse_abs_url)) {
-			$regex_body[]	= '#(?<=href=["\'])' . $data->integratedURL . '(.*?)(?=["\'])#m';
+		if(!empty($this->data->parse_abs_url)) {
+			$regex_body[]	= '#(?<=href=["\'])' . $this->data->integratedURL . '(.*?)(?=["\'])#m';
 			$replace_body[] = '';
 			$callback_body[] = 'fixUrl';
 		}
 
 		//convert relative links from images into absolute links
-		if(!empty($data->parse_rel_img)) {
+		if(!empty($this->data->parse_rel_img)) {
 // (?<quote>["\'])
 // \k<quote>
 			$regex_body[] = '#(src=["\']|background=["\']|url\()\./(.*?)(["\']|\))#mS';
-			$replace_body[]	= '$1' . $data->integratedURL . '$2$3';
+			$replace_body[]	= '$1' . $this->data->integratedURL . '$2$3';
 			$callback_body[] = '';
 
 			$regex_body[] = '#(src=["\']|background=["\']|url\()(?!\w{0,10}://|\w{0,10}:|\/)(.*?)(["\']|\))#mS';
-			$replace_body[]	= '$1' . $data->integratedURL . '$2$3';
+			$replace_body[]	= '$1' . $this->data->integratedURL . '$2$3';
 			$callback_body[] = '';
 		}
 
 		//parse form actions
-		if(!empty($data->parse_action)) {
-			if (!empty($data->parse_abs_path)) {
+		if(!empty($this->data->parse_action)) {
+			if (!empty($this->data->parse_abs_path)) {
 				$regex_body[] = '#action=[\'"]' . $path . '(.*?)[\'"](.*?)>#m';
 				$replace_body[]	= '';
 				$callback_body[] = 'fixAction';
 			}
-			if (!empty($data->parse_abs_url)) {
-				$regex_body[] = '#action=[\'"]' . $data->integratedURL . '(.*?)[\'"](.*?)>#m';
+			if (!empty($this->data->parse_abs_url)) {
+				$regex_body[] = '#action=[\'"]' . $this->data->integratedURL . '(.*?)[\'"](.*?)>#m';
 				$replace_body[]	= '';
 				$callback_body[] = 'fixAction';
 			}
-			if (!empty($data->parse_rel_url)) {
+			if (!empty($this->data->parse_rel_url)) {
 				$regex_body[] = '#action=[\'"](?!\w{0,10}://|\w{0,10}:|\/)(.*?)[\'"](.*?)>#m';
 				$replace_body[]	= '';
 				$callback_body[] = 'fixAction';
@@ -1211,13 +1214,13 @@ HTML;
 		}
 
 		//parse relative popup links to full url links
-		if(!empty($data->parse_popup)) {
+		if(!empty($this->data->parse_popup)) {
 			$regex_body[] = '#window\.open\(\'(?!\w{0,10}://)(.*?)\'\)#mS';
-			$replace_body[]	= 'window.open(\'' . $data->integratedURL . '$1\'';
+			$replace_body[]	= 'window.open(\'' . $this->data->integratedURL . '$1\'';
 			$callback_body[] = '';
 		}
 
-		$value = $data->bodymap;
+		$value = $this->data->bodymap;
 		$value = @unserialize($value);
 		if(is_array($value)) {
 			foreach ($value['value'] as $key => $val) {
@@ -1240,28 +1243,26 @@ HTML;
 		foreach ($regex_body as $k => $v) {
 			//check if we need to use callback
 			if(!empty($callback_body[$k])) {
-				$data->body = preg_replace_callback($regex_body[$k], array(&$this, $callback_body[$k]), $data->body);
+				$this->data->body = preg_replace_callback($regex_body[$k], array(&$this, $callback_body[$k]), $this->data->body);
 			} else {
-				$data->body = preg_replace($regex_body[$k], $replace_body[$k], $data->body);
+				$this->data->body = preg_replace($regex_body[$k], $replace_body[$k], $this->data->body);
 			}
 		}
 
-		$this->_parseBody($data);
+		$this->_parseBody();
 	}
 
 	/**
 	 * function that parses the HTML body and fixes up URLs and form actions
-	 * @param &$data
 	 */
-	function _parseBody(&$data)
+	function _parseBody()
 	{
 	}
 
 	/**
 	 * function that parses the HTML header and fixes up URLs
-	 * @param &$data
 	 */
-	function parseHeader(&$data)
+	function parseHeader()
 	{
 		// Define our preg arrays
 		$regex_header = array();
@@ -1269,27 +1270,27 @@ HTML;
 		$callback_header = array();
 
 		//convert relative links into absolute links
-		$siteuri = new Uri($data->integratedURL);
+		$siteuri = new Uri($this->data->integratedURL);
 		$path = $siteuri->getPath();
 
 		$regex_header[]	= '#(href|src)=(?<quote>["\'])' . $path . '(.*?)(\k<quote>)#Si';
-		$replace_header[] = '$1=$2' . $data->integratedURL . '$3$4';
+		$replace_header[] = '$1=$2' . $this->data->integratedURL . '$3$4';
 		$callback_header[] = '';
 
 		$regex_header[]		= '#(href|src)=(?<quote>["\'])(\.\/|/)(.*?)(\k<quote>)#iS';
-		$replace_header[]	= '$1=$2' . $data->integratedURL . '$4$5';
+		$replace_header[]	= '$1=$2' . $this->data->integratedURL . '$4$5';
 		$callback_header[] = '';
 
 		$regex_header[] 	= '#(href|src)=(?<quote>["\'])(?!\w{0,10}://)(.*?)(\k<quote>)#mSi';
-		$replace_header[]	= '$1=$2' . $data->integratedURL . '$3$4';
+		$replace_header[]	= '$1=$2' . $this->data->integratedURL . '$3$4';
 		$callback_header[] = '';
 
 		$regex_header[]		= '#@import(.*?)(?<quote>["\'])' . $path . '(.*?)(\k<quote>)#Sis';
-		$replace_header[]	= '@import$1$2' . $data->integratedURL . '$3$4';
+		$replace_header[]	= '@import$1$2' . $this->data->integratedURL . '$3$4';
 		$callback_header[] = '';
 
 		$regex_header[]		= '#@import(.*?)(?<quote>["\'])\.\/(.*?)(\k<quote>)#Sis';
-		$replace_header[]	= '@import$1$2' . $data->integratedURL . '$3$4';
+		$replace_header[]	= '@import$1$2' . $this->data->integratedURL . '$3$4';
 		$callback_header[] = '';
 
 		//fix for URL redirects
@@ -1300,7 +1301,7 @@ HTML;
 			$callback_header[] = 'fixRedirect';
 		}
 
-		$value = $data->headermap;
+		$value = $this->data->headermap;
 		$value = @unserialize($value);
 		if(is_array($value)) {
 			foreach ($value['value'] as $key => $val) {
@@ -1322,39 +1323,37 @@ HTML;
 		foreach ($regex_header as $k => $v) {
 			//check if we need to use callback
 			if(!empty($callback_header[$k])) {
-				$data->header = preg_replace_callback($regex_header[$k], array(&$this, $callback_header[$k]), $data->header);
+				$this->data->header = preg_replace_callback($regex_header[$k], array(&$this, $callback_header[$k]), $this->data->header);
 			} else {
-				$data->header = preg_replace($regex_header[$k], $replace_header[$k], $data->header);
+				$this->data->header = preg_replace($regex_header[$k], $replace_header[$k], $this->data->header);
 			}
 		}
 
-		$this->_parseHeader($data);
+		$this->_parseHeader();
 	}
 
 	/**
 	 * function that parses the HTML header and fixes up URLs
-	 * @param &$data
 	 */
-	function _parseHeader(&$data)
+	function _parseHeader()
 	{
 
 	}
 
 	/**
 	 * Parsers the buffer received from getBuffer into header and body
-	 * @param &$data
 	 */
-	function parseBuffer(&$data) {
+	function parseBuffer() {
 		$pattern = '#<head[^>]*>(.*?)<\/head>.*?<body([^>]*)>(.*)<\/body>#si';
 		$temp = array();
 
-		preg_match($pattern, $data->buffer, $temp);
-		if(!empty($temp[1])) $data->header = $temp[1];
-		if(!empty($temp[3])) $data->body = $temp[3];
+		preg_match($pattern, $this->data->buffer, $temp);
+		if(!empty($temp[1])) $this->data->header = $temp[1];
+		if(!empty($temp[3])) $this->data->body = $temp[3];
 
 		$pattern = '#onload=["]([^"]*)#si';
 		if(!empty($temp[2])) {
-			$data->bodyAttributes = $temp[2];
+			$this->data->bodyAttributes = $temp[2];
 			if(preg_match($pattern, $temp[2], $temp)) {
 				$js ='<script language="JavaScript" type="text/javascript">';
 				$js .= <<<JS
@@ -1369,7 +1368,7 @@ HTML;
                 }
 JS;
 				$js .= '</script>';
-				$data->header .= $js;
+				$this->data->header .= $js;
 			}
 		}
 		unset($temp);
@@ -1378,11 +1377,10 @@ JS;
 	/**
 	 * function that parses the HTML and fix the css
 	 *
-	 * @param object &$data data to parse
 	 * @param string &$html data to parse
 	 * @param bool $infile_only parse only infile (body)
 	 */
-	function parseCSS(&$data, &$html, $infile_only = false)
+	function parseCSS(&$html, $infile_only = false)
 	{
 		$jname = $this->getJname();
 
@@ -1390,20 +1388,20 @@ JS;
 			$jname = Factory::getApplication()->input->get('Itemid');
 		}
 
-		$sourcepath = $data->css->sourcepath . $jname . '/';
-		$urlpath = $data->css->url . $jname . '/';
+		$sourcepath = $this->data->css->sourcepath . $jname . '/';
+		$urlpath = $this->data->css->url . $jname . '/';
 
 		Folder::create($sourcepath . 'infile');
 		if (!$infile_only) {
 			//Outputs: apearpearle pear
-			if ($data->parse_css) {
+			if ($this->data->parse_css) {
 				if (preg_match_all('#<link(.*?type=[\'|"]text\/css[\'|"][^>]*)>#Si', $html, $css)) {
 					foreach ($css[1] as $values) {
 						if(preg_match('#href=[\'|"](.*?)[\'|"]#Si', $values, $cssUrl)) {
 							$cssUrlRaw = $cssUrl[1];
 
 							if (strpos($cssUrlRaw, '/') === 0) {
-								$uri = new Uri($data->integratedURL);
+								$uri = new Uri($this->data->integratedURL);
 
 								$cssUrlRaw = $uri->toString(array('scheme', 'user', 'pass', 'host', 'port')) . $cssUrlRaw;
 							}
@@ -1427,7 +1425,7 @@ JS;
 				}
 			}
 		}
-		if ($data->parse_infile_css) {
+		if ($this->data->parse_infile_css) {
 			if (preg_match_all('#<style.*?type=[\'|"]text/css[\'|"].*?>(.*?)</style>#Sims', $html, $css)) {
 				foreach ($css[1] as $key => $values) {
 					$filename = md5($values) . '.css';
@@ -1441,14 +1439,14 @@ JS;
 
 					if (!is_file(Path::clean($filenamesource))) {
 						$cssparser = new Css('#jfusionframeless');
-						$cssparser->setUrl($data->integratedURL);
+						$cssparser->setUrl($this->data->integratedURL);
 						$cssparser->ParseStr($values);
 						$content = $cssparser->GetCSS();
 						File::write($filenamesource, $content);
 					}
 					if (is_file(Path::clean($filenamesource))) {
-						$data->css->files[] = $urlpath . 'infile/' . $filename;
-						$data->css->media[] = $cssMedia;
+						$this->data->css->files[] = $urlpath . 'infile/' . $filename;
+						$this->data->css->media[] = $cssMedia;
 					}
 				}
 				$html = preg_replace('#<style.*?type=[\'|"]text/css[\'|"].*?>(.*?)</style>#Sims', '', $html);
@@ -1602,11 +1600,10 @@ JS;
 
 	/**
 	 * function to generate url for wrapper
-	 * @param &$data
 	 *
 	 * @return string returns the url
 	 */
-	function getWrapperURL($data)
+	function getWrapperURL()
 	{
 		//get the url
 		$query = ($_GET);
@@ -1629,20 +1626,18 @@ JS;
 	}
 
 	/**
-	 * @param $data
-	 *
 	 * @throws \RuntimeException
 	 */
-	private function curlFrameless(&$data) {
-		$url = $data->source_url;
+	private function curlFrameless() {
+		$url = $this->data->source_url;
 
 		$config = Factory::getConfig();
 		$sefenabled = $config->get('sef');
 		if(!empty($sefenabled)) {
-			$current = new Uri($data->fullURL);
+			$current = new Uri($this->data->fullURL);
 			$current = $current->toString();
 
-			$index = new Uri($data->baseURL);
+			$index = new Uri($this->data->baseURL);
 			$index = $index->toString(array('path', 'query'));
 
 			$pos = strpos($current, $index);
@@ -1693,31 +1688,31 @@ JS;
 			curl_setopt($ch, CURLOPT_POST, 0);
 		}
 
-		if(!empty($data->httpauth) ) {
-			curl_setopt($ch,CURLOPT_USERPWD, $data->httpauth_username . ':' . $data->httpauth_password);
+		if(!empty($this->data->httpauth) ) {
+			curl_setopt($ch,CURLOPT_USERPWD, $this->data->httpauth_username . ':' . $this->data->httpauth_password);
 
-			switch ($data->httpauth) {
+			switch ($this->data->httpauth) {
 				case 'basic':
-					$data->httpauth = CURLAUTH_BASIC;
+					$this->data->httpauth = CURLAUTH_BASIC;
 					break;
 				case 'gssnegotiate':
-					$data->httpauth = CURLAUTH_GSSNEGOTIATE;
+					$this->data->httpauth = CURLAUTH_GSSNEGOTIATE;
 					break;
 				case 'digest':
-					$data->httpauth = CURLAUTH_DIGEST;
+					$this->data->httpauth = CURLAUTH_DIGEST;
 					break;
 				case 'ntlm':
-					$data->httpauth = CURLAUTH_NTLM;
+					$this->data->httpauth = CURLAUTH_NTLM;
 					break;
 				case 'anysafe':
-					$data->httpauth = CURLAUTH_ANYSAFE;
+					$this->data->httpauth = CURLAUTH_ANYSAFE;
 					break;
 				case 'any':
 				default:
-					$data->httpauth = CURLAUTH_ANY;
+				$this->data->httpauth = CURLAUTH_ANY;
 			}
 
-			curl_setopt($ch,CURLOPT_HTTPAUTH, $data->httpauth);
+			curl_setopt($ch,CURLOPT_HTTPAUTH, $this->data->httpauth);
 		}
 
 		curl_setopt($ch, CURLOPT_USERAGENT, $_SERVER['HTTP_USER_AGENT']);
@@ -1735,8 +1730,8 @@ JS;
 		curl_setopt($ch, CURLOPT_FAILONERROR, 0);
 		curl_setopt($ch, CURLOPT_MAXREDIRS, 2 );
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-		$data->verifyhost = isset($data->verifyhost) ? $data->verifyhost : 2;
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $data->verifyhost);
+		$this->data->verifyhost = isset($this->data->verifyhost) ? $this->data->verifyhost : 2;
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, $this->data->verifyhost);
 
 		curl_setopt($ch, CURLOPT_HEADER, 0);
 
@@ -1746,19 +1741,19 @@ JS;
 		curl_setopt($ch, CURLOPT_COOKIE, $cookies->buildCookie());
 		unset($_COOKIE['jfusionframeless']);
 
-		$data->buffer = curl_exec($ch);
+		$this->data->buffer = curl_exec($ch);
 
-		$this->curlFramelessProtectParams($data);
+		$this->curlFramelessProtectParams();
 
 		if ($this->curlLocation) {
-			$data->location = $this->curlLocation;
+			$this->data->location = $this->curlLocation;
 		}
 
-		$data->cookie_domain = isset($data->cookie_domain) ? $data->cookie_domain : '';
-		$data->cookie_path = isset($data->cookie_path) ? $data->cookie_path : '';
+		$this->data->cookie_domain = isset($this->data->cookie_domain) ? $this->data->cookie_domain : '';
+		$this->data->cookie_path = isset($this->data->cookie_path) ? $this->data->cookie_path : '';
 
 		foreach ($this->cookies as $cookie) {
-			$cookies->addCookie($cookie->name, urldecode($cookie->value), $cookie->expires, $data->cookie_path, $data->cookie_domain);
+			$cookies->addCookie($cookie->name, urldecode($cookie->value), $cookie->expires, $this->data->cookie_path, $this->data->cookie_domain);
 		}
 
 		if (curl_errno($ch)) {
@@ -1834,14 +1829,11 @@ JS;
 		return http_build_query($var);
 	}
 
-	/**
-	 * @param stdClass $data
-	 */
-	private function curlFramelessProtectParams(&$data) {
+	private function curlFramelessProtectParams() {
 		$regex_input = array();
 		$replace_input = array();
 
-		$uri = new Uri($data->source_url);
+		$uri = new Uri($this->data->source_url);
 
 		$search = array();
 		$search[] = preg_quote($uri->getPath(), '#');
@@ -1861,7 +1853,7 @@ JS;
 
 		foreach ($regex_input as $k => $v) {
 			//check if we need to use callback
-			$data->buffer = preg_replace($regex_input[$k], $replace_input[$k], $data->buffer);
+			$this->data->buffer = preg_replace($regex_input[$k], $replace_input[$k], $this->data->buffer);
 		}
 	}
 
